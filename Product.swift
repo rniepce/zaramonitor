@@ -7,6 +7,7 @@ final class Product {
     var url: String
     var name: String
     var currentPrice: Double
+    var initialPrice: Double
     var targetPrice: Double?
     var imageURL: String?
     var currency: String
@@ -19,6 +20,7 @@ final class Product {
         self.url = url
         self.name = name
         self.currentPrice = currentPrice
+        self.initialPrice = currentPrice
         self.currency = currency
         self.targetPrice = targetPrice
         self.imageURL = imageURL
@@ -26,7 +28,7 @@ final class Product {
         self.isMonitoring = true
         self.priceHistory = []
         
-        // Add specific initial history point
+        // Add initial history point
         addPricePoint(price: currentPrice)
     }
     
@@ -35,6 +37,17 @@ final class Product {
         self.priceHistory.append(point)
         self.currentPrice = price
         self.lastChecked = Date()
+    }
+    
+    /// Percentage change from initial price. Negative = price dropped.
+    var priceChangePercent: Double {
+        guard initialPrice > 0 else { return 0 }
+        return ((currentPrice - initialPrice) / initialPrice) * 100.0
+    }
+    
+    /// Absolute change from initial price. Negative = price dropped.
+    var priceChangeAbsolute: Double {
+        return currentPrice - initialPrice
     }
 }
 

@@ -21,14 +21,6 @@ struct ZaraMonitorApp: App {
     
     init() {
         BackgroundManager.shared.requestNotificationPermission()
-        
-        // Register the background task
-        // Note: This must be done before the app finishes launching
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: BackgroundManager.taskId, using: nil) { task in
-             // In a real app, we need to get the ModelContext properly here, likely via a ModelActor
-             // BackgroundManager.shared.handleAppRefresh(task: task as! BGAppRefreshTask, modelContext: ...)
-             task.setTaskCompleted(success: true) // Placeholder for now
-        }
     }
 
     var body: some Scene {
@@ -36,6 +28,10 @@ struct ZaraMonitorApp: App {
             ContentView()
         }
         .modelContainer(sharedModelContainer)
+        .backgroundTask(.appRefresh(BackgroundManager.taskId)) {
+            let actor = BackgroundRefreshActor(modelContainer: sharedModelContainer)
+            await actor.refreshAllProducts()
+        }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .background {
                 BackgroundManager.shared.scheduleAppRefresh()
