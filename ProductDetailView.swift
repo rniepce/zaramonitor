@@ -10,34 +10,26 @@ struct ProductDetailView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                // Hero image — full width, editorial
+                // Hero image
                 heroImage
 
-                // Product info
+                // Product info wrapped in glass card
                 VStack(alignment: .leading, spacing: 24) {
                     productHeader
                     priceSection
-                    Divider()
                     settingsSection
-                    Divider()
                     priceHistorySection
-                    Divider()
                     actionsSection
                 }
-                .padding(.horizontal, 24)
+                .padding(24)
+                .glassEffect(.regular, in: .rect(cornerRadius: 24))
+                .padding(.horizontal, 16)
                 .padding(.top, 24)
                 .padding(.bottom, 40)
             }
         }
-        .background(Color.white)
+        .navigationTitle("Detalhes")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("DETALHES")
-                    .font(.system(size: 12, weight: .regular, design: .serif))
-                    .tracking(3)
-            }
-        }
     }
 
     // MARK: - Hero Image
@@ -56,11 +48,12 @@ struct ProductDetailView: View {
                 default:
                     Rectangle().fill(Color(.systemGray6))
                         .frame(height: 300)
-                        .overlay(ProgressView().tint(.gray))
+                        .overlay(ProgressView())
                 }
             }
             .frame(maxWidth: .infinity)
-            .background(Color(.systemGray6).opacity(0.3))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .padding(.horizontal, 16)
         }
     }
 
@@ -71,7 +64,7 @@ struct ProductDetailView: View {
             Text(product.name.uppercased())
                 .font(.system(size: 13, weight: .regular))
                 .tracking(2)
-                .foregroundColor(.black)
+                .foregroundStyle(.primary)
         }
     }
 
@@ -84,40 +77,40 @@ struct ProductDetailView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text(formatPrice(product.currentPrice))
                         .font(.system(size: 22, weight: .light))
-                        .foregroundColor(.black)
+                        .foregroundStyle(.primary)
                     Text(product.currency)
                         .font(.system(size: 10, weight: .light))
-                        .foregroundColor(.black.opacity(0.4))
+                        .foregroundStyle(.secondary)
                 }
 
                 // Original price (strikethrough) if changed
                 if product.initialPrice != product.currentPrice {
                     Text(formatPrice(product.initialPrice))
                         .font(.system(size: 15, weight: .light))
-                        .foregroundColor(.black.opacity(0.3))
-                        .strikethrough(color: .black.opacity(0.3))
+                        .foregroundStyle(.secondary)
+                        .strikethrough()
                 }
             }
 
             // Percentage change
             let pct = product.priceChangePercent
             if abs(pct) > 0.5 {
-                Text(String(format: "%@%.1f%%", pct > 0 ? "+" : "", pct))
-                    .font(.system(size: 11, weight: .regular, design: .monospaced))
-                    .foregroundColor(pct < 0 ? .black : .black.opacity(0.4))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(
-                        pct < 0
-                            ? Color.black.opacity(0.05)
-                            : Color(.systemGray5).opacity(0.5)
-                    )
+                HStack(spacing: 4) {
+                    Image(systemName: pct < 0 ? "arrow.down.right" : "arrow.up.right")
+                        .font(.system(size: 9, weight: .medium))
+                    Text(String(format: "%@%.1f%%", pct > 0 ? "+" : "", pct))
+                        .font(.system(size: 11, weight: .regular, design: .monospaced))
+                }
+                .foregroundStyle(pct < 0 ? .green : .red)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .glassEffect(.regular, in: .capsule)
             }
 
             // Last checked
             Text("Atualizado \(product.lastChecked.formatted(.relative(presentation: .named)))")
                 .font(.system(size: 10, weight: .light))
-                .foregroundColor(.black.opacity(0.3))
+                .foregroundStyle(.tertiary)
                 .padding(.top, 4)
         }
     }
@@ -126,17 +119,16 @@ struct ProductDetailView: View {
 
     private var settingsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("CONFIGURAÇÕES")
-                .font(.system(size: 10, weight: .regular))
-                .tracking(2)
-                .foregroundColor(.black.opacity(0.4))
+            Text("Configurações")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
 
             HStack {
                 Text("Monitoramento")
                     .font(.system(size: 13, weight: .light))
                 Spacer()
                 Toggle("", isOn: $product.isMonitoring)
-                    .tint(.black)
+                    .tint(.accentColor)
             }
 
             HStack {
@@ -156,15 +148,14 @@ struct ProductDetailView: View {
 
     private var priceHistorySection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("HISTÓRICO DE PREÇOS")
-                .font(.system(size: 10, weight: .regular))
-                .tracking(2)
-                .foregroundColor(.black.opacity(0.4))
+            Text("Histórico de Preços")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
 
             if product.priceHistory.isEmpty {
                 Text("Sem dados ainda")
                     .font(.system(size: 12, weight: .light))
-                    .foregroundColor(.black.opacity(0.3))
+                    .foregroundStyle(.tertiary)
             } else {
                 // Chart
                 Chart(product.priceHistory) { point in
@@ -172,8 +163,8 @@ struct ProductDetailView: View {
                         x: .value("Data", point.date),
                         y: .value("Preço", point.price)
                     )
-                    .foregroundStyle(.black)
-                    .lineStyle(StrokeStyle(lineWidth: 1))
+                    .foregroundStyle(.primary)
+                    .lineStyle(StrokeStyle(lineWidth: 1.5))
 
                     AreaMark(
                         x: .value("Data", point.date),
@@ -181,7 +172,7 @@ struct ProductDetailView: View {
                     )
                     .foregroundStyle(
                         .linearGradient(
-                            colors: [.black.opacity(0.06), .clear],
+                            colors: [.accentColor.opacity(0.15), .clear],
                             startPoint: .top,
                             endPoint: .bottom
                         )
@@ -191,25 +182,25 @@ struct ProductDetailView: View {
                         x: .value("Data", point.date),
                         y: .value("Preço", point.price)
                     )
-                    .foregroundStyle(.black)
-                    .symbolSize(16)
+                    .foregroundStyle(.primary)
+                    .symbolSize(20)
                 }
                 .chartXAxis {
                     AxisMarks(values: .automatic) { _ in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.3))
-                            .foregroundStyle(.black.opacity(0.1))
+                            .foregroundStyle(.tertiary)
                         AxisValueLabel()
                             .font(.system(size: 8, weight: .light))
-                            .foregroundStyle(.black.opacity(0.4))
+                            .foregroundStyle(.secondary)
                     }
                 }
                 .chartYAxis {
                     AxisMarks(values: .automatic) { _ in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.3))
-                            .foregroundStyle(.black.opacity(0.1))
+                            .foregroundStyle(.tertiary)
                         AxisValueLabel()
                             .font(.system(size: 8, weight: .light))
-                            .foregroundStyle(.black.opacity(0.4))
+                            .foregroundStyle(.secondary)
                     }
                 }
                 .frame(height: 160)
@@ -220,11 +211,11 @@ struct ProductDetailView: View {
                         HStack {
                             Text(point.date.formatted(date: .abbreviated, time: .omitted))
                                 .font(.system(size: 11, weight: .light))
-                                .foregroundColor(.black.opacity(0.5))
+                                .foregroundStyle(.secondary)
                             Spacer()
                             Text(formatPrice(point.price))
                                 .font(.system(size: 11, weight: .light, design: .monospaced))
-                                .foregroundColor(.black)
+                                .foregroundStyle(.primary)
                         }
                         .padding(.vertical, 8)
 
@@ -244,18 +235,15 @@ struct ProductDetailView: View {
                 HStack {
                     Spacer()
                     if isRefreshing {
-                        ProgressView().tint(.white)
+                        ProgressView()
                     } else {
-                        Text("ATUALIZAR PREÇO")
-                            .font(.system(size: 12, weight: .regular))
-                            .tracking(2)
+                        Label("Atualizar Preço", systemImage: "arrow.clockwise")
+                            .font(.system(size: 14, weight: .medium))
                     }
                     Spacer()
                 }
-                .foregroundColor(.white)
-                .padding(.vertical, 14)
-                .background(Color.black)
             }
+            .buttonStyle(.glassProminent)
             .disabled(isRefreshing)
 
             Button(action: {
@@ -263,18 +251,12 @@ struct ProductDetailView: View {
             }) {
                 HStack {
                     Spacer()
-                    Text("VER NA ZARA")
-                        .font(.system(size: 12, weight: .regular))
-                        .tracking(2)
+                    Label("Ver na Zara", systemImage: "safari")
+                        .font(.system(size: 14, weight: .medium))
                     Spacer()
                 }
-                .foregroundColor(.black)
-                .padding(.vertical, 14)
-                .overlay(
-                    Rectangle()
-                        .stroke(Color.black, lineWidth: 0.5)
-                )
             }
+            .buttonStyle(.glass)
         }
     }
 

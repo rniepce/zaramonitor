@@ -14,32 +14,22 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color.white.ignoresSafeArea()
-
+            Group {
                 if products.isEmpty {
                     emptyState
                 } else {
                     productList
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Zara Monitor")
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("ZARA MONITOR")
-                        .font(.system(size: 15, weight: .regular, design: .serif))
-                        .tracking(4)
-                }
                 ToolbarItem(placement: .navigationBarLeading) {
                     if !products.isEmpty {
                         Button(action: refreshAllPrices) {
                             if isRefreshingAll {
                                 ProgressView()
-                                    .tint(.black)
                             } else {
                                 Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 13, weight: .light))
-                                    .foregroundColor(.black)
                             }
                         }
                         .disabled(isRefreshingAll)
@@ -48,8 +38,6 @@ struct ContentView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingAddProduct = true }) {
                         Image(systemName: "plus")
-                            .font(.system(size: 14, weight: .light))
-                            .foregroundColor(.black)
                     }
                 }
             }
@@ -65,15 +53,10 @@ struct ContentView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Text("NENHUM PRODUTO")
-                .font(.system(size: 13, weight: .light))
-                .tracking(3)
-                .foregroundColor(.black.opacity(0.4))
-
-            Text("Toque + para adicionar")
-                .font(.system(size: 12, weight: .light))
-                .foregroundColor(.black.opacity(0.3))
+        ContentUnavailableView {
+            Label("Nenhum Produto", systemImage: "tag")
+        } description: {
+            Text("Toque + para adicionar um produto da Zara.")
         }
     }
 
@@ -81,17 +64,15 @@ struct ContentView: View {
 
     private var productList: some View {
         ScrollView {
-            LazyVStack(spacing: 0) {
+            LazyVStack(spacing: 12) {
                 ForEach(sortedProducts) { product in
                     NavigationLink(destination: ProductDetailView(product: product)) {
                         ProductRow(product: product)
                     }
                     .buttonStyle(.plain)
-
-                    Divider()
-                        .padding(.horizontal, 20)
                 }
             }
+            .padding(.horizontal, 16)
             .padding(.top, 8)
         }
     }
@@ -124,7 +105,7 @@ struct ContentView: View {
     }
 }
 
-// MARK: - Product Row — Zara Editorial Style
+// MARK: - Product Row — Liquid Glass Card
 
 struct ProductRow: View {
     let product: Product
@@ -144,14 +125,14 @@ struct ProductRow: View {
                 }
             }
             .frame(width: 90, height: 130)
-            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 12))
 
-            // Product info — minimal, elegant typography
+            // Product info
             VStack(alignment: .leading, spacing: 8) {
                 Text(product.name.uppercased())
                     .font(.system(size: 11, weight: .regular))
                     .tracking(1.5)
-                    .foregroundColor(.black)
+                    .foregroundStyle(.primary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
 
@@ -161,32 +142,32 @@ struct ProductRow: View {
                 HStack(alignment: .firstTextBaseline, spacing: 0) {
                     Text(formatPrice(product.currentPrice))
                         .font(.system(size: 14, weight: .light))
-                        .foregroundColor(.black)
+                        .foregroundStyle(.primary)
 
                     Text(" \(product.currency)")
                         .font(.system(size: 9, weight: .light))
-                        .foregroundColor(.black.opacity(0.4))
+                        .foregroundStyle(.secondary)
                 }
 
                 // Original price if changed
                 if product.initialPrice != product.currentPrice {
                     Text(formatPrice(product.initialPrice))
                         .font(.system(size: 11, weight: .light))
-                        .foregroundColor(.black.opacity(0.35))
-                        .strikethrough(color: .black.opacity(0.35))
+                        .foregroundStyle(.secondary)
+                        .strikethrough()
                 }
 
                 Spacer()
 
-                // Price change indicator — subtle, editorial
+                // Price change indicator
                 priceChangeView
             }
             .padding(.vertical, 12)
 
             Spacer()
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 4)
+        .padding(16)
+        .glassEffect(.regular, in: .rect(cornerRadius: 20))
     }
 
     @ViewBuilder
@@ -195,14 +176,17 @@ struct ProductRow: View {
 
         if abs(pct) > 0.5 {
             HStack(spacing: 4) {
-                Rectangle()
-                    .fill(pct < 0 ? Color.black : Color(.systemGray4))
-                    .frame(width: 2, height: 12)
+                Image(systemName: pct < 0 ? "arrow.down.right" : "arrow.up.right")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(pct < 0 ? .green : .red)
 
                 Text(String(format: "%@%.0f%%", pct > 0 ? "+" : "", pct))
-                    .font(.system(size: 10, weight: pct < 0 ? .medium : .light, design: .monospaced))
-                    .foregroundColor(pct < 0 ? .black : .black.opacity(0.35))
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundStyle(pct < 0 ? .green : .red)
             }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .glassEffect(.regular, in: .capsule)
         }
     }
 

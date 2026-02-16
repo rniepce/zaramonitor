@@ -14,134 +14,111 @@ struct AddProductView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color.white.ignoresSafeArea()
+            ScrollView {
+                VStack(spacing: 20) {
+                    // URL Input Card
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("URL do Produto")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
 
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // URL Input
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("URL DO PRODUTO")
-                                .font(.system(size: 10, weight: .regular))
-                                .tracking(2)
-                                .foregroundColor(.black.opacity(0.4))
+                        TextField("https://www.zara.com/...", text: $urlString)
+                            .font(.system(size: 14, weight: .light))
+                            .keyboardType(.URL)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .textFieldStyle(.roundedBorder)
 
-                            TextField("https://www.zara.com/...", text: $urlString)
-                                .font(.system(size: 14, weight: .light))
-                                .keyboardType(.URL)
-                                .autocapitalization(.none)
-                                .disableAutocorrection(true)
-                                .padding(.vertical, 12)
-                                .padding(.horizontal, 16)
-                                .overlay(
-                                    Rectangle()
-                                        .stroke(Color.black.opacity(0.15), lineWidth: 0.5)
-                                )
-
-                            Button(action: fetchProduct) {
-                                HStack {
-                                    Spacer()
-                                    if isLoading {
-                                        ProgressView().tint(.white)
-                                    } else {
-                                        Text("BUSCAR")
-                                            .font(.system(size: 12, weight: .regular))
-                                            .tracking(2)
-                                    }
-                                    Spacer()
+                        Button(action: fetchProduct) {
+                            HStack {
+                                Spacer()
+                                if isLoading {
+                                    ProgressView()
+                                } else {
+                                    Text("Buscar")
+                                        .font(.system(size: 14, weight: .medium))
                                 }
-                                .foregroundColor(.white)
-                                .padding(.vertical, 14)
-                                .background(urlString.isEmpty || isLoading ? Color.black.opacity(0.3) : Color.black)
-                            }
-                            .disabled(urlString.isEmpty || isLoading)
-                        }
-                        .padding(.horizontal, 24)
-                        .padding(.top, 32)
-
-                        // Preview
-                        if let product = scrapedProduct {
-                            VStack(spacing: 0) {
-                                Divider()
-                                    .padding(.vertical, 24)
-
-                                // Product image
-                                if let imageUrl = product.imageURL, let url = URL(string: imageUrl) {
-                                    AsyncImage(url: url) { phase in
-                                        switch phase {
-                                        case .success(let image):
-                                            image.resizable()
-                                                .aspectRatio(contentMode: .fit)
-                                        default:
-                                            Rectangle().fill(Color(.systemGray6))
-                                                .frame(height: 280)
-                                        }
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .background(Color(.systemGray6).opacity(0.3))
-                                }
-
-                                VStack(alignment: .leading, spacing: 12) {
-                                    Text(product.name.uppercased())
-                                        .font(.system(size: 12, weight: .regular))
-                                        .tracking(1.5)
-                                        .foregroundColor(.black)
-                                        .padding(.top, 16)
-
-                                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                                        Text(formatPrice(product.price))
-                                            .font(.system(size: 18, weight: .light))
-                                            .foregroundColor(.black)
-                                        Text(product.currency)
-                                            .font(.system(size: 9, weight: .light))
-                                            .foregroundColor(.black.opacity(0.4))
-                                    }
-
-                                    Button(action: saveProduct) {
-                                        HStack {
-                                            Spacer()
-                                            Text("ADICIONAR AO MONITOR")
-                                                .font(.system(size: 12, weight: .regular))
-                                                .tracking(2)
-                                            Spacer()
-                                        }
-                                        .foregroundColor(.white)
-                                        .padding(.vertical, 14)
-                                        .background(Color.black)
-                                    }
-                                    .padding(.top, 8)
-                                }
-                                .padding(.horizontal, 24)
+                                Spacer()
                             }
                         }
+                        .buttonStyle(.glassProminent)
+                        .disabled(urlString.isEmpty || isLoading)
+                    }
+                    .padding(20)
+                    .glassEffect(.regular, in: .rect(cornerRadius: 20))
 
-                        // Error
-                        if let error = errorMessage {
-                            Text(error)
-                                .font(.system(size: 12, weight: .light))
-                                .foregroundColor(.red.opacity(0.7))
-                                .padding(.horizontal, 24)
-                                .padding(.top, 20)
+                    // Preview
+                    if let product = scrapedProduct {
+                        VStack(spacing: 0) {
+                            // Product image
+                            if let imageUrl = product.imageURL, let url = URL(string: imageUrl) {
+                                AsyncImage(url: url) { phase in
+                                    switch phase {
+                                    case .success(let image):
+                                        image.resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                    default:
+                                        Rectangle().fill(Color(.systemGray6))
+                                            .frame(height: 200)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: 280)
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                            }
+
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(product.name.uppercased())
+                                    .font(.system(size: 12, weight: .regular))
+                                    .tracking(1.5)
+                                    .foregroundStyle(.primary)
+                                    .padding(.top, 16)
+
+                                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                                    Text(formatPrice(product.price))
+                                        .font(.system(size: 18, weight: .light))
+                                        .foregroundStyle(.primary)
+                                    Text(product.currency)
+                                        .font(.system(size: 9, weight: .light))
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Button(action: saveProduct) {
+                                    HStack {
+                                        Spacer()
+                                        Text("Adicionar ao Monitor")
+                                            .font(.system(size: 14, weight: .medium))
+                                        Spacer()
+                                    }
+                                }
+                                .buttonStyle(.glassProminent)
+                                .padding(.top, 8)
+                            }
                         }
+                        .padding(20)
+                        .glassEffect(.regular, in: .rect(cornerRadius: 20))
+                    }
+
+                    // Error
+                    if let error = errorMessage {
+                        Text(error)
+                            .font(.system(size: 12, weight: .light))
+                            .foregroundStyle(.red)
+                            .padding(.horizontal, 24)
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
             }
+            .navigationTitle("Adicionar")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("ADICIONAR")
-                        .font(.system(size: 12, weight: .regular, design: .serif))
-                        .tracking(3)
-                }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 12, weight: .light))
-                            .foregroundColor(.black)
+                    Button("Cancelar") {
+                        dismiss()
                     }
                 }
             }
-            .alert("PRODUTO DUPLICADO", isPresented: $showDuplicateAlert) {
+            .alert("Produto Duplicado", isPresented: $showDuplicateAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text("Este produto já está sendo monitorado.")
