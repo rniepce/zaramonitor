@@ -256,6 +256,11 @@ struct WebViewContainer: UIViewRepresentable {
         webView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
         webView.allowsBackForwardNavigationGestures = true
         
+        // KVO Observation for SPA support
+        webView.addObserver(context.coordinator, forKeyPath: #keyPath(WKWebView.url), options: .new, context: nil)
+        webView.addObserver(context.coordinator, forKeyPath: #keyPath(WKWebView.title), options: .new, context: nil)
+        webView.addObserver(context.coordinator, forKeyPath: #keyPath(WKWebView.canGoBack), options: .new, context: nil)
+        
         context.coordinator.webView = webView
         state.webView = webView
         
@@ -265,7 +270,13 @@ struct WebViewContainer: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: WKWebView, context: Context) {
-        // No-op: we only load the initial URL
+        // No-op
+    }
+    
+    static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
+        uiView.removeObserver(coordinator, forKeyPath: #keyPath(WKWebView.url))
+        uiView.removeObserver(coordinator, forKeyPath: #keyPath(WKWebView.title))
+        uiView.removeObserver(coordinator, forKeyPath: #keyPath(WKWebView.canGoBack))
     }
     
     func makeCoordinator() -> Coordinator {
@@ -280,6 +291,19 @@ struct WebViewContainer: UIViewRepresentable {
             self.state = state
         }
         
+        override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+            Task { @MainActor in
+                guard let webView = object as? WKWebView else { return }
+                if keyPath == #keyPath(WKWebView.url) {
+                    state.currentURL = webView.url
+                } else if keyPath == #keyPath(WKWebView.title) {
+                    state.pageTitle = webView.title
+                } else if keyPath == #keyPath(WKWebView.canGoBack) {
+                    state.canGoBack = webView.canGoBack
+                }
+            }
+        }
+        
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
             Task { @MainActor in
                 state.isLoading = true
@@ -289,9 +313,6 @@ struct WebViewContainer: UIViewRepresentable {
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             Task { @MainActor in
                 state.isLoading = false
-                state.currentURL = webView.url
-                state.canGoBack = webView.canGoBack
-                state.pageTitle = webView.title
             }
         }
         
