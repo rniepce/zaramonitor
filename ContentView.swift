@@ -44,7 +44,7 @@ struct ContentView: View {
             .refreshable {
                 await refreshAllPricesAsync()
             }
-            .sheet(isPresented: $showingAddProduct) {
+            .fullScreenCover(isPresented: $showingAddProduct) {
                 AddProductView()
             }
         }
